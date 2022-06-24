@@ -1,32 +1,81 @@
-# Prerequisites
-*.d
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+#include "Adafruit_VL53L0X.h"
 
-# Precompiled Headers
-*.gch
-*.pch
+Adafruit_VL53L0X distance1 = Adafruit_VL53L0X();
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+//define L298 enable pins
+const int ln1=11;                  // left wheel
+const int ln2=10;
+const int ln3=9;    //right wheel
+const int ln4=8;    
+const int enA=12;                 
+const int enB=6;                  //!enable pins have to connect with arduino's PWM pins!
 
-# Fortran module files
-*.mod
-*.smod
+const int  sda= A4;
+const int scl=A5;
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
 
-# Executables
-*.exe
-*.out
-*.app
+int time1;
+int time2;
+
+
+void setup() {
+   Serial.begin(9600);
+  pinMode(ln1,OUTPUT);            //all motor pins output
+  pinMode(ln2,OUTPUT);
+  pinMode(ln3,OUTPUT);
+  pinMode(ln4,OUTPUT);
+  
+  pinMode(enA,OUTPUT);
+  pinMode(enB,OUTPUT);
+
+  pinMode(sda,OUTPUT);       //trigpin is output because it sends sound wave
+  pinMode(scl,INPUT);       //echopin is ınput because it receives sound wave 
+
+  delay(2000);           
+
+}
+void loop() {
+
+VL53L0X_RangingMeasurementData_t measure;
+  //FOR MEASURE THE DISTANCE
+  digitalWrite(sda,LOW);      //first, we start trigpin low 
+  delay(45);
+  digitalWrite(sda,HIGH);     //second, we open trigpin and send sound made
+  delay(45);
+  digitalWrite(sda,LOW);      //then, we close again for other loop
+  time1 = pulseIn(scl,HIGH);  //then, we open echopin and receive sound made and
+                                  //we measure the time with pulseIn() function.
+  distance1.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
+
+
+if (measure.RangeStatus==20){
+digitalWrite(ln1,HIGH);
+digitalWrite(ln2,LOW);
+digitalWrite(ln3,HIGH);
+digitalWrite(ln4,LOW);
+
+}
+
+else if (measure.RangeStatus>20  ){
+//RIGHT WHEEL
+digitalWrite(ln1,LOW);
+digitalWrite(ln2,LOW);
+digitalWrite(ln3,HIGH);
+digitalWrite(ln4,HIGH);
+analogWrite(enB,250);
+
+}
+
+else if (measure.RangeStatus<20  ){
+
+//LEFT WHEEL
+
+  digitalWrite(ln1,HIGH);
+digitalWrite(ln2,HIGH);
+digitalWrite(ln3,LOW);
+digitalWrite(ln4,LOW);
+analogWrite(enA,250);
+
+}
+}
